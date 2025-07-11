@@ -14,10 +14,10 @@ fn load_config() -> Config {
     let config_data = fs::read_to_string("config.toml").expect("Failed to read config.toml");
     toml::from_str(&config_data).expect("Invalid config format")
 }
-//first
+
 fn main() -> std::io::Result<()> {
     let config = load_config();
-    let address = format!("127.0.0.1    :{}", config.port);
+    let address = format!("127.0.0.1:{}", config.port);
     let listener = TcpListener::bind(&address)?;
     println!("Server listening on http://{}", address);
 
@@ -43,7 +43,10 @@ fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> 
     println!("Request:\n{}", request);
 
     let response = if request.starts_with("GET") {
-        http_response(&format!("GET: {}", config.message))
+        // Serve static HTML file instead of plain message
+        let html = fs::read_to_string("static/index.html")
+            .unwrap_or_else(|_| "<h1>404 Not Found</h1>".to_string());
+        http_html_response(&html)
     } else if request.starts_with("POST") {
         http_response(&format!("POST: {}", config.message))
     } else if request.starts_with("DELETE") {
@@ -60,6 +63,14 @@ fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> 
 fn http_response(body: &str) -> String {
     format!(
         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/plain\r\n\r\n{}",
+        body.len(),
+        body
+    )
+}
+
+fn http_html_response(body: &str) -> String {
+    format!(
+        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}",
         body.len(),
         body
     )

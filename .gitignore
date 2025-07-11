@@ -1,0 +1,15 @@
+# Ignore Rust build artifacts
+/target
+**/*.rs.bk
+
+# Ignore IDE/editor settings
+.idea/
+.vscode/
+*.swp
+
+# Ignore config if needed (optional, if it's personal)
+# config.toml
+
+# Ignore system files
+.DS_Store
+Thumbs.db
