@@ -1,0 +1,2 @@
+port = 8080
+message = "Hello from config file!"
