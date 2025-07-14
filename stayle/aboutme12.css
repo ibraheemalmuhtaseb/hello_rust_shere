@@ -1,0 +1,55 @@
+
+body{
+    background-color: rgb(106, 99, 99);
+    background-attachment: fixed;
+}
+h1{
+    color:rgb(77, 73, 70);
+    font-size: 60px;
+    font-style:oblique;
+    transition: 0.4s;
+}
+h1:hover{
+    color:rgb(82, 88, 83);
+    font-size: 60px;
+    font-style:oblique;
+    text-shadow : 3px 0 3px rgb(118, 128, 123);
+    transition: 0.4s;
+}
+p{
+  color:rgb(77, 73, 70);
+    font-size: 60px;
+    font-style:oblique;
+    transition: 0.4s;
+}
+p:hover{
+  color:rgb(82, 88, 83);
+  font-size: 60px;
+  font-style:oblique;
+  text-shadow : 3px 0 3px rgb(118, 128, 123);
+  transition: 0.4s;
+}
+img{
+  margin-bottom: 10px;
+  width: 200px;
+  height: 200px;
+}
+#gmail{
+  font-size: xx-large;
+  color: rgb(127, 151, 172);
+}
+a{
+  font-size: large;
+  color:rgb(127, 151, 172) ;
+    font-style:oblique;
+    transition: 0.4s;
+}
+a:hover{
+  color:rgb(127, 151, 172);
+  font-style:oblique;
+  text-shadow : 3px 0 3px rgb(118, 128, 123);
+  transition: 0.4s;
+}
+#Qr{
+  margin-bottom: 2px;
+}

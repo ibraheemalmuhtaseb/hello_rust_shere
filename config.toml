@@ -1,0 +1,3 @@
+port = 8080
+message = "Hello from config!"
+html_path = "html/aboutme.html" 

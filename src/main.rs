@@ -41,10 +41,46 @@ fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> 
     let request = String::from_utf8_lossy(&buffer[..bytes_read]);
 
     println!("Request:\n{}", request);
+    let path_line = request.lines().next().unwrap_or("");
+    let mut parts = path_line.split_whitespace();
+    let method = parts.next().unwrap_or("");
+    let path = parts.next().unwrap_or("/");
+
+   
+    if method == "GET" && path.starts_with("/stayle/") {
+        let file_path = &path[1..]; 
+        match fs::read(file_path) {
+            Ok(contents) => {
+                let content_type = if file_path.ends_with(".css") {
+                    "text/css"
+                } else if file_path.ends_with(".jpg") || file_path.ends_with(".jpeg") {
+                    "image/jpeg"
+                } else if file_path.ends_with(".png") {
+                    "image/png"
+                } else {
+                    "application/octet-stream"
+                };
+
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: {}\r\n\r\n",
+                    contents.len(),
+                    content_type
+                );
+                stream.write_all(response.as_bytes())?;
+                stream.write_all(&contents)?;
+                return Ok(());
+            }
+            Err(_) => {
+                let response = http_response("Static file not found");
+                stream.write_all(response.as_bytes())?;
+                return Ok(());
+            }
+        }
+    }
 
     let response = if request.starts_with("GET") {
         // Serve static HTML file instead of plain message
-        let html = fs::read_to_string("static/index.html")
+        let html = fs::read_to_string("static/aboutme.html")
             .unwrap_or_else(|_| "<h1>404 Not Found</h1>".to_string());
         http_html_response(&html)
     } else if request.starts_with("POST") {
