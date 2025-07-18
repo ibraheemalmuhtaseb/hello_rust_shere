@@ -3,7 +3,8 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 
 use serde::Deserialize;
-
+use std::process::Command;
+use std::process::Stdio;
 #[derive(Debug, Deserialize)]
 struct Config {
     port: u16,
@@ -16,6 +17,20 @@ fn load_config() -> Config {
 }
 
 fn main() -> std::io::Result<()> {
+    let mut child = Command::new("python3")
+    .arg("hi.py")
+    .stdin(Stdio::piped())
+    .stdout(Stdio::piped())
+    .spawn()
+    .expect("failed to run script");
+
+if let Some(stdin) = child.stdin.as_mut() {
+    writeln!(stdin, "brhoom here").unwrap(); 
+}
+
+let output = child.wait_with_output().unwrap();
+let result = String::from_utf8_lossy(&output.stdout);
+println!("Python replied:\n{}", result);
     let config = load_config();
     let address = format!("127.0.0.1:{}", config.port);
     let listener = TcpListener::bind(&address)?;

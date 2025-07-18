@@ -13,3 +13,5 @@
 # Ignore system files
 .DS_Store
 Thumbs.db
+.rustc_info.json
+target/.rustc_info.json
