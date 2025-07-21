@@ -1,10 +1,9 @@
 use std::fs;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-
+use std::process::{Command, Stdio};
 use serde::Deserialize;
-use std::process::Command;
-use std::process::Stdio;
+
 #[derive(Debug, Deserialize)]
 struct Config {
     port: u16,
@@ -17,22 +16,8 @@ fn load_config() -> Config {
 }
 
 fn main() -> std::io::Result<()> {
-    let mut child = Command::new("python3")
-    .arg("hi.py")
-    .stdin(Stdio::piped())
-    .stdout(Stdio::piped())
-    .spawn()
-    .expect("failed to run script");
-
-if let Some(stdin) = child.stdin.as_mut() {
-    writeln!(stdin, "brhoom here").unwrap(); 
-}
-
-let output = child.wait_with_output().unwrap();
-let result = String::from_utf8_lossy(&output.stdout);
-println!("Python replied:\n{}", result);
     let config = load_config();
-    let address = format!("127.0.0.1:{}", config.port);
+    let address = format!("0.0.0.0:{}", config.port);
     let listener = TcpListener::bind(&address)?;
     println!("Server listening on http://{}", address);
 
@@ -51,7 +36,7 @@ println!("Python replied:\n{}", result);
 }
 
 fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> {
-    let mut buffer = [0; 1024];
+    let mut buffer = [0; 4096];
     let bytes_read = stream.read(&mut buffer)?;
     let request = String::from_utf8_lossy(&buffer[..bytes_read]);
 
@@ -61,9 +46,48 @@ fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> 
     let method = parts.next().unwrap_or("");
     let path = parts.next().unwrap_or("/");
 
-   
+    if method == "POST" {
+    let script_path = "hi.py";
+    let path_info = path;
+    let body = request.split("\r\n\r\n").nth(1).unwrap_or("");
+
+    if fs::metadata(script_path).is_ok() {
+        let output = Command::new("python3")
+            .arg(script_path)
+            .env("PATH_INFO", path_info)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .and_then(|mut child| {
+                if let Some(stdin) = child.stdin.as_mut() {
+                    stdin.write_all(body.as_bytes())?;
+                }
+                child.wait_with_output()
+            });
+
+        match output {
+            Ok(output) => {
+                let response = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n{}",
+                    String::from_utf8_lossy(&output.stdout)
+                );
+                stream.write_all(response.as_bytes())?;
+            }
+            Err(e) => {
+                let response = format!(
+                    "HTTP/1.1 500 Internal Server Error\r\n\r\nCGI error: {}",
+                    e
+                );
+                stream.write_all(response.as_bytes())?;
+            }
+        }
+
+        return Ok(());
+        }
+    }
+
     if method == "GET" && path.starts_with("/stayle/") {
-        let file_path = &path[1..]; 
+        let file_path = &path[1..];
         match fs::read(file_path) {
             Ok(contents) => {
                 let content_type = if file_path.ends_with(".css") {
@@ -93,16 +117,22 @@ fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> 
         }
     }
 
+    // Serve static HTML for GET
     let response = if request.starts_with("GET") {
-        // Serve static HTML file instead of plain message
         let html = fs::read_to_string("static/aboutme.html")
             .unwrap_or_else(|_| "<h1>404 Not Found</h1>".to_string());
         http_html_response(&html)
-    } else if request.starts_with("POST") {
+    }
+    // Respond to POST with message
+    else if request.starts_with("POST") {
         http_response(&format!("POST: {}", config.message))
-    } else if request.starts_with("DELETE") {
+    }
+    // Respond to DELETE with message
+    else if request.starts_with("DELETE") {
         http_response(&format!("DELETE: {}", config.message))
-    } else {
+    }
+    // Fallback
+    else {
         http_response("Unknown method")
     };
 
