@@ -15,3 +15,5 @@
 Thumbs.db
 .rustc_info.json
 target/.rustc_info.json
+target/rust-analyzer/metadata/sysroot/Cargo.lock
+target/rust-analyzer/metadata/workspace/Cargo.lock
