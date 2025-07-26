@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct Config {
-    port: u16,
+    ports: Vec<u16>,
     message: String,
 }
 
@@ -19,27 +19,39 @@ fn load_config() -> Config {
 
 fn main() -> std::io::Result<()> {
     let config = load_config();
-    let address = format!("0.0.0.0:{}", config.port);
-    let listener = TcpListener::bind(&address)?;
-    println!("Server listening on http://{}", address);
 
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                stream.set_read_timeout(Some(Duration::from_secs(5))).ok();
-                stream.set_write_timeout(Some(Duration::from_secs(5))).ok();
+    let listeners: Vec<TcpListener> = config.ports.iter()
+    .map(|port| {
+        let address = format!("0.0.0.0:{}", port);
+        println!("Listening on http://{}", address);
+        TcpListener::bind(&address).expect("Failed to bind")
+    })
+    .collect();
 
-                if let Err(e) = handle_client(stream, &config) {
-                    eprintln!("Client error: {}", e);
+    // non blocking
+    for listener in &listeners {
+        listener.set_nonblocking(true).ok();
+    }
+
+    loop {
+        for listener in &listeners {
+            match listener.accept() {
+                Ok((stream, _)) => {
+                    // Handle client safely
+                    if let Err(e) = handle_client(stream, &config) {
+                        eprintln!("Client error: {}", e);
+                    }
                 }
-            }
-            Err(e) => {
-                eprintln!("Connection error: {}", e);
+                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    // No incoming connection right now
+                    continue;
+                }
+                Err(e) => {
+                    eprintln!("Listener error: {}", e);
+                }
             }
         }
     }
-
-    Ok(())
 }
 
 fn handle_client(mut stream: TcpStream, config: &Config) -> std::io::Result<()> {
