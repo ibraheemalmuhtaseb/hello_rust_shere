@@ -38,6 +38,11 @@ fn main() -> std::io::Result<()> {
             match listener.accept() {
                 Ok((stream, _)) => {
                     // Handle client safely
+                    if let Err(e)=stream.set_nonblocking(false){
+                        eprintln!("Failed to set non-blocking: {}", e);
+                        continue;
+                    }
+                    
                     if let Err(e) = handle_client(stream, &config) {
                         eprintln!("Client error: {}", e);
                     }
