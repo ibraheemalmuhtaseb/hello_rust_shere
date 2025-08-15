@@ -1,5 +1,5 @@
 [package]
-name = "Hello_rust_shere"
+name = "hello_rust_shere"
 version = "0.1.0"
 edition = "2021"
 

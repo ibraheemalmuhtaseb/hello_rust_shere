@@ -3,15 +3,6 @@
 version = 4
 
 [[package]]
-name = "Hello_rust_shere"
-version = "0.1.0"
-dependencies = [
- "serde",
- "toml",
- "wait-timeout",
-]
-
-[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -22,6 +13,15 @@ name = "hashbrown"
 version = "0.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5971ac85611da7067dbfcabef3c70ebb5606018acd9e2a3903a0da507521e0d5"
+
+[[package]]
+name = "hello_rust_shere"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "toml",
+ "wait-timeout",
+]
 
 [[package]]
 name = "indexmap"
